@@ -309,13 +309,13 @@ class PrimerHalf(models.Model):
 		else:
 			end = self.cfragment.start() + 50
 		
-		s = Seq(self.cfragment.fragment.sequence)
+		s = Seq(self.cfragment.sequence())
 		s = s[start:end]
 		if self.top: s = reverse_complement(s)
 		return s
 	
 	def seq(self):
-		s = Seq(self.cfragment.fragment.sequence)
+		s = Seq(self.cfragment.sequence())
 		s = s[self.start():self.end()]
 		if self.top: s = reverse_complement(s)
 		return s
