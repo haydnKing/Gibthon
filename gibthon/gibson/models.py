@@ -448,12 +448,12 @@ class Construct(models.Model):
 			cf = self.cf.get(id=cfid)
 			if cf.order != i:
 				cf.order = i
-				cf.save()
 				self.processed = False
-			if directions[i] in ('f', 'r',):
+				cf.save()
+			if directions[i] in ('f', 'r',) and cf.direction != directions[i]:
 				cf.direction = directions[i]
-				cf.save()
 				self.processed = False
+				cf.save()
 		self.save()
 	
 	def process(self, new=True):

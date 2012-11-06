@@ -177,7 +177,7 @@ directions = {1:'f', -1:'r',}
 def save_order(request, cid):
 	con = get_construct(request.user, cid)
 	cfid = request.POST.getlist('cfid[]')
-	direction = request.POST.getlist('direction[]')
+	direction = [int(d) for d in request.POST.getlist('direction[]')]
 	if not cfid:
 		return JsonResponse('No cfids provided.', ERROR)
 	if not direction:
