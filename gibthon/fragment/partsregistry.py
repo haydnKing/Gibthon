@@ -9,10 +9,10 @@ from Bio.SeqFeature import SeqFeature, FeatureLocation
 '''
 Stem of the URL for a BioBrick page
 e.g. the xml info for the part "BBa_I13520" is found at:
-"http://partsregistry.org/cgi/xml/part.cgi?part=BBa_I13520"
+"http://parts.igem.org/cgi/xml/part.cgi?part=BBa_I13520"
 '''
 #the url from which to fetch parts
-partsURL = "http://partsregistry.org/cgi/xml/part.cgi?part=%s"
+partsURL = "http://parts.igem.org/cgi/xml/part.cgi?part=%s"
 
 #regexes for all possible parts - add more if you discover them!
 name_forms = [	"^bba_[a-z][0-9]{0,15}$",
@@ -51,7 +51,8 @@ class Part:
 		self.name = getTag(soup, "part_name")
 		self.short_name = getTag(soup, "part_short_name")
 		self.description = getTag(soup, "part_short_desc")
-		self.status = getTag(soup, "part_status")
+		self.sample_status = getTag(soup, "sample_status")
+		self.release_status = getTag(soup, "release_status")
 		self.results = getTag(soup, "part_results")
 		self.nickname = getTag(soup, "part_nickname")
 		self.rating = getTag(soup, "part_rating")
