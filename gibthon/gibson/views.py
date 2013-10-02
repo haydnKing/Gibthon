@@ -49,9 +49,21 @@ def get_primer(user, pid):
 def download(request, cid):
 	con = get_construct(request.user, cid)
 	if con:
-		#response = HttpResponse(mimetype='chemical/seq-na-genbank')
-		response = HttpResponse(mimetype='text/plain')
+		response = HttpResponse(mimetype='chemical/seq-na-genbank')
+		#response = HttpResponse(mimetype='text/plain')
 		response.write(con.gb())
+		response['Content-Disposition'] = 'attachment; filename="%s.gb"' % con.name
+		return response
+	else:
+		return HttpResponseNotFound()
+
+@login_required
+def download_sbol(request,cid):
+	con = get_construct(request.user, cid)
+	if con:
+		response = HttpResponse(mimetype='text/xml')
+		response.write(con.sbol())
+		response['Content-Disposition'] = 'attachment; filename="%s.sbol"' % con.name
 		return response
 	else:
 		return HttpResponseNotFound()
@@ -104,7 +116,7 @@ def load_primer(request, cid, pid):
 			return HttpResponseNotFound()
 	else:
 		return HttpResponseNotFound()
-		
+
 @login_required
 def primers(request, cid):
 	con = get_construct(request.user, cid)
@@ -148,7 +160,7 @@ def constructs(request):
 	c.update(csrf(request))
 	return HttpResponse(t.render(c))
 
-@login_required	
+@login_required
 def construct_add(request):
 	if request.method == 'POST':
 		rp = fix_request(request.POST)
@@ -208,7 +220,7 @@ def construct_fragment(request, cid):
 		cf_list = con.cf.all()
 		frag_list = [{'fid':cf.fragment.id, 'cfid': cf.id, 'name':cf.fragment.name, 'desc': cf.fragment.description, 'length':abs(cf.end()-cf.start()),} for cf in cf_list]
 		return JsonResponse(frag_list)
-		
+
 	return HttpResponseNotFound()
 
 @login_required
@@ -217,7 +229,7 @@ def construct_delete(request, cid):
 	if con:
 		con.delete()
 		if request.is_ajax():
-			return JsonResponse('/gibthon') 
+			return JsonResponse('/gibthon')
 		return HttpResponseRedirect('/gibthon')
 	else:
 		return HttpResponseNotFound()
@@ -230,11 +242,11 @@ def apply_clipping(request, cid, cfid):
 			cf = con.cf.get(id=cfid)
 		except:
 			return JsonResponse('Could not find ConstructFragment(%s)' % cfid, ERROR)
-		
+
 		try:
 			f_type = request.POST['from_type'].lower()
 			t_type = request.POST['to_type'].lower()
-		
+
 			if f_type == 'absolute':
 				start = int(request.POST['from_abs'])
 				if start < 0 or start > cf.fragment.length() - 1:
@@ -246,7 +258,7 @@ def apply_clipping(request, cid, cfid):
 			elif f_type == 'relative':
 				start = int(request.POST['from_rel'])
 				start_fid = int(request.POST['start_feat'])
-				print "available ids are %s" % [feat.id for feat in cf.fragment.features.all()] 
+				print "available ids are %s" % [feat.id for feat in cf.fragment.features.all()]
 				start_feature = cf.fragment.features.get(id=start_fid)
 				if cf.start_offset != start or cf.start_feature != start_feature:
 					cf.start_offset = start
@@ -254,8 +266,8 @@ def apply_clipping(request, cid, cfid):
 					con.processed = False
 			else:
 				raise ValueError('"f_type" must be "absolute" or "relative"')
-				
-			
+
+
 			if t_type == 'absolute':
 				end = int(request.POST['to_abs'])
 				if end < 0 or end > cf.fragment.length() - 1:
@@ -273,16 +285,16 @@ def apply_clipping(request, cid, cfid):
 					cf.end_feature = end_feature
 					con.processed = False
 			else:
-				raise ValueError('"t_type" must be "absolute" or "relative"')		
-					
-			
+				raise ValueError('"t_type" must be "absolute" or "relative"')
+
+
 		except KeyError as e:
 			return JsonResponse('Value required for "%s"' % e.message, ERROR)
 		except ValueError as e:
 			return JsonResponse('ValueError: %s' % e.message, ERROR)
 		except ObjectDoesNotExist as e:
 			return JsonResponse('DoesNotExist: %s (%s)' % (e.message, start_fid), ERROR)
-		
+
 		cf.save()
 		con.save()
 		return JsonResponse('OK')
@@ -311,7 +323,7 @@ def fragment_clipping(request, cid, cfid):
 		if cf.end_is_relative():
 			d['end_feat'] = cf.end_feature.id
 		d['end_offset'] = cf.end_offset
-		
+
 		c = RequestContext(request, d)
 		return HttpResponse(t.render(c))
 	raise Http404
@@ -330,7 +342,7 @@ def fragment_viewer(request, cid, fid):
 			return HttpResponseNotFound()
 	else:
 		return HttpResponseNotFound()
-	
+
 @login_required
 def fragment_browse(request, cid):
 	con = get_construct(request.user, cid)
@@ -344,7 +356,7 @@ def fragment_browse(request, cid):
 		return HttpResponse(t.render(c))
 	else:
 		return HttpResponseNotFound()
-			
+
 @login_required
 def summary(request, cid):
 	con = get_construct(request.user, cid)
@@ -374,7 +386,7 @@ def primer_offset(request, cid, pid):
 			else:
 				p.stick.cfragment.start_offset = offset
 			p.stick.cfragment.save()
-		return process(request, cid, reset=False, new=False)		
+		return process(request, cid, reset=False, new=False)
 	else:
 		return HttpResponseNotFound()
 
@@ -476,10 +488,10 @@ def primer_download(request, cid):
 		response = HttpResponse(mimetype='application/zip')
 		response['Content-Disposition'] = 'attachment; filename='+con.name+'.zip'
 		response.set_cookie('fileDownloadToken',request.GET['tk'])
-		
+
 		# get all the pcr instruction files
 		pcr = [(con.name + '-' + cf.fragment.name+'.pcr',pcr_cycle(cf)) for cf in con.cf.all()]
-		
+
 		# write the csv file
 		csvbuffer = StringIO()
 		writer = csv.writer(csvbuffer)
@@ -487,7 +499,7 @@ def primer_download(request, cid):
 		for p in con.primer.all():
 			writer.writerow(p.csv())
 		csvbuffer.flush()
-		
+
 		# write the pdf
 		t = loader.get_template('gibson/pdf_primer.html')
 		c = RequestContext(request,{
@@ -496,7 +508,7 @@ def primer_download(request, cid):
 		})
 		pdfbuffer = StringIO()
 		pdf = pisa.CreatePDF(StringIO(t.render(c).encode("ISO-8859-1")), pdfbuffer, link_callback=fetch_resources)
-		
+
 		# write the zip file
 		zipbuffer = StringIO()
 		zip = zipfile.ZipFile(zipbuffer, 'w', zipfile.ZIP_DEFLATED)
@@ -509,6 +521,8 @@ def primer_download(request, cid):
 		zip.writestr(con.name+'/'+con.name+'.pdf', pdfbuffer.getvalue())
 		# add the gb
 		zip.writestr(con.name+'/'+con.name+'.gb', con.gb())
+		# add the sbol
+		zip.writestr(con.name+'/'+con.name+'.sbol', con.sbol())
 		# closing of buffers and return
 		csvbuffer.close()
 		pdfbuffer.close()
